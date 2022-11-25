@@ -21,7 +21,18 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // check function
+    //Collection create
+    const usersCollection = client
+      .db("laptops_second_hand_products")
+      .collection("users");
+
+    //  user create database
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      console.log(user);
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
   } finally {
   }
 }
