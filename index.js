@@ -10,6 +10,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// git push check
 app.get("/", async (req, res) => {
   res.send("laptops second hand products server  is running");
 });
