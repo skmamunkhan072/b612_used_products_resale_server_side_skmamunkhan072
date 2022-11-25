@@ -25,12 +25,21 @@ async function run() {
     const usersCollection = client
       .db("laptops_second_hand_products")
       .collection("users");
+    const allProductsCategoryName = client
+      .db("laptops_second_hand_products")
+      .collection("all_products_category_name");
 
     //  user create database
     app.post("/users", async (req, res) => {
       const user = req.body;
-      console.log(user);
       const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
+    // products category create
+    app.get("/all-products-category", async (req, res) => {
+      const query = {};
+      const result = await allProductsCategoryName.find(query).toArray();
       res.send(result);
     });
   } finally {
