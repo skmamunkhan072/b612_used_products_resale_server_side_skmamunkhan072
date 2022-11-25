@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const { MongoClient, ServerApiVersion } = require("mongodb");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
@@ -10,7 +11,23 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// git push check
+// mongodb url
+const uri = process.env.DATABAS_URL;
+const client = new MongoClient(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverApi: ServerApiVersion.v1,
+});
+
+async function run() {
+  try {
+    // check function
+  } finally {
+  }
+}
+
+run().catch(console.log);
+
 app.get("/", async (req, res) => {
   res.send("laptops second hand products server  is running");
 });
