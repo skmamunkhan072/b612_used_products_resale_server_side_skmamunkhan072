@@ -43,9 +43,12 @@ async function run() {
     const usersCollection = client
       .db("laptops_second_hand_products")
       .collection("users");
-    const allProductsCategoryName = client
+    const allProductsCategoryNameCollection = client
       .db("laptops_second_hand_products")
       .collection("all_products_category_name");
+    const allProductsCategoryCollection = client
+      .db("laptops_second_hand_products")
+      .collection("all_products");
 
     //  user create database
     app.post("/users", async (req, res) => {
@@ -61,7 +64,7 @@ async function run() {
       const user = await usersCollection.findOne(query);
       if (user) {
         const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
-          expiresIn: "1h",
+          expiresIn: "7h",
         });
         return res.send({ accessToken: token });
       }
@@ -71,16 +74,15 @@ async function run() {
     // products category create
     app.get("/all-products-category/", async (req, res) => {
       const authHeader = req?.headers?.authorization;
-      // console.log(authHeader);
       const id = req?.query?.categoryId;
       var query = {};
+      //jwt token verify
       if (id && authHeader) {
         var query = { _id: ObjectId(id) };
         if (!authHeader) {
           return res.status(401).send("unauthorized access");
         }
         const token = authHeader.split(" ")[1];
-        // console.log(token, process.env.ACCESS_TOKEN);
         let error = false;
         if (!token) {
           return res.status(403).send({ message: "forbidden access" });
@@ -94,8 +96,18 @@ async function run() {
           return res.status(403).send({ message: "forbidden access" });
         }
       }
-      // console.log(query);
-      const result = await allProductsCategoryName.find(query).toArray();
+      const result = await allProductsCategoryNameCollection
+        .find(query)
+        .toArray();
+      res.send(result);
+    });
+
+    // products add database
+    app.post("/add-product", verifyJWT, async (req, res) => {
+      const product = req.body;
+      // console.log(product, "hit korcea");
+      const result = await allProductsCategoryCollection.insertOne(product);
+      console.log(result);
       res.send(result);
     });
   } finally {
