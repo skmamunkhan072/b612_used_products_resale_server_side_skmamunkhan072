@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
@@ -69,8 +69,12 @@ async function run() {
     });
 
     // products category create
-    app.get("/all-products-category", async (req, res) => {
-      const query = {};
+    app.get("/all-products-category/", async (req, res) => {
+      const id = req?.query?.categoryId;
+      var query = {};
+      if (id) {
+        var query = { _id: ObjectId(id) };
+      }
       const result = await allProductsCategoryName.find(query).toArray();
       res.send(result);
     });
