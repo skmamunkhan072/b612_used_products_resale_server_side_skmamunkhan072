@@ -70,11 +70,31 @@ async function run() {
 
     // products category create
     app.get("/all-products-category/", async (req, res) => {
+      const authHeader = req?.headers?.authorization;
+      // console.log(authHeader);
       const id = req?.query?.categoryId;
       var query = {};
-      if (id) {
+      if (id && authHeader) {
         var query = { _id: ObjectId(id) };
+        if (!authHeader) {
+          return res.status(401).send("unauthorized access");
+        }
+        const token = authHeader.split(" ")[1];
+        // console.log(token, process.env.ACCESS_TOKEN);
+        let error = false;
+        if (!token) {
+          return res.status(403).send({ message: "forbidden access" });
+        }
+        jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+          if (err) {
+            return (error = true);
+          }
+        });
+        if (error) {
+          return res.status(403).send({ message: "forbidden access" });
+        }
       }
+      // console.log(query);
       const result = await allProductsCategoryName.find(query).toArray();
       res.send(result);
     });
