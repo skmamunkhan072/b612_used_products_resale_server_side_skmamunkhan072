@@ -36,6 +36,10 @@ function verifyJWT(req, res, next) {
     next();
   });
 }
+function verifyRole(req, res, next) {
+  const email = req.query.email;
+  console.log(email);
+}
 
 async function run() {
   try {
@@ -54,6 +58,14 @@ async function run() {
     app.post("/users", async (req, res) => {
       const user = req.body;
       const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
+    // all user get function
+    app.get("/users", verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      const query = {};
+      const result = await usersCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -111,13 +123,12 @@ async function run() {
     });
 
     // sealer products get database function
-    app.get("/my-products", async (req, res) => {
+    app.get("/my-products", verifyJWT, async (req, res) => {
       const email = req.query.email;
       let query = {};
       if (email) {
         query = { email };
       }
-      console.log(query);
       const result = await allProductsCategoryCollection.find(query).toArray();
       res.send(result);
     });
