@@ -63,12 +63,19 @@ async function run() {
 
     // all user get function
     app.get("/users", verifyJWT, async (req, res) => {
-      const email = req.query.email;
+      const email = req.decoded.email;
       const query = {};
       const result = await usersCollection.find(query).toArray();
+      const data = result?.filter((user) => user.email !== email);
+      res.send(data);
+    });
+    // user delete function
+    app.delete("/user/:id", async (req, res) => {
+      const userId = req.params.id;
+      console.log(userId);
+      const result = await usersCollection.deleteOne({ _id: ObjectId(userId) });
       res.send(result);
     });
-
     // Jwt token crate function
     app.get("/jwt", async (req, res) => {
       const email = req.query.email;
@@ -124,12 +131,33 @@ async function run() {
 
     // sealer products get database function
     app.get("/my-products", verifyJWT, async (req, res) => {
-      const email = req.query.email;
+      const email = req?.query?.email;
+
       let query = {};
       if (email) {
         query = { email };
       }
       const result = await allProductsCategoryCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // my product advertised
+    app.put("/my-products/:id", verifyJWT, async (req, res) => {
+      const itemsId = req.params.id;
+      const query = { _id: ObjectId(itemsId) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          advertised: true,
+          sellersVerify: true,
+        },
+      };
+      console.log(itemsId);
+      const result = await allProductsCategoryCollection.updateOne(
+        query,
+        updateDoc,
+        options
+      );
       res.send(result);
     });
   } finally {
