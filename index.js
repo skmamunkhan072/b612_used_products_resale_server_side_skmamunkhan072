@@ -105,9 +105,20 @@ async function run() {
     // products add database
     app.post("/add-product", verifyJWT, async (req, res) => {
       const product = req.body;
-      // console.log(product, "hit korcea");
       const result = await allProductsCategoryCollection.insertOne(product);
       console.log(result);
+      res.send(result);
+    });
+
+    // sealer products get database function
+    app.get("/my-products", async (req, res) => {
+      const email = req.query.email;
+      let query = {};
+      if (email) {
+        query = { email };
+      }
+      console.log(query);
+      const result = await allProductsCategoryCollection.find(query).toArray();
       res.send(result);
     });
   } finally {
