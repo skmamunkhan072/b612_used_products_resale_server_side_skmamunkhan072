@@ -53,6 +53,9 @@ async function run() {
     const allProductsCategoryCollection = client
       .db("laptops_second_hand_products")
       .collection("all_products");
+    const bookingProductsCollection = client
+      .db("laptops_second_hand_products")
+      .collection("all_booking_products");
 
     //  user create database
     app.post("/users", async (req, res) => {
@@ -64,6 +67,14 @@ async function run() {
     // all user get function
     app.get("/users", verifyJWT, async (req, res) => {
       const email = req.decoded.email;
+      const loginUserEmail = req.query.email;
+      console.log(loginUserEmail, "hit korecea");
+      if (loginUserEmail) {
+        const loginUserQuery = { email: loginUserEmail };
+        const result = await usersCollection.findOne(loginUserQuery);
+        console.log(result);
+        return res.send(result);
+      }
       const query = {};
       const result = await usersCollection.find(query).toArray();
       const data = result?.filter((user) => user.email !== email);
@@ -72,7 +83,6 @@ async function run() {
     // user delete function
     app.delete("/user/:id", async (req, res) => {
       const userId = req.params.id;
-      console.log(userId);
       const result = await usersCollection.deleteOne({ _id: ObjectId(userId) });
       res.send(result);
     });
@@ -120,12 +130,21 @@ async function run() {
         .toArray();
       res.send(result);
     });
-
+    //category products
+    app.get("/category-products/:id", async (req, res) => {
+      const id = req.params.id;
+      const categoryQuery = { _id: ObjectId(id) };
+      const category = await allProductsCategoryNameCollection.findOne(
+        categoryQuery
+      );
+      const query = { Category: category?.categoryName };
+      const result = await allProductsCategoryCollection.find(query).toArray();
+      res.send(result);
+    });
     // products add database
     app.post("/add-product", verifyJWT, async (req, res) => {
       const product = req.body;
       const result = await allProductsCategoryCollection.insertOne(product);
-      console.log(result);
       res.send(result);
     });
 
@@ -152,12 +171,34 @@ async function run() {
           sellersVerify: true,
         },
       };
-      console.log(itemsId);
       const result = await allProductsCategoryCollection.updateOne(
         query,
         updateDoc,
         options
       );
+      res.send(result);
+    });
+    //book products
+    app.get("/book-now/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id, "paice");
+      const query = { _id: ObjectId(id) };
+      const result = await allProductsCategoryCollection.findOne(query);
+      res.send(result);
+    });
+
+    // booking product function
+    app.post("/book-now", async (req, res) => {
+      const booking = req.body;
+      const result = await bookingProductsCollection.insertOne(booking);
+      res.send(result);
+    });
+
+    // AdvertisedItems function
+    app.get("/advertised-items", async (req, res) => {
+      const email = req.query.email;
+      const query = { email, advertised: true };
+      const result = await allProductsCategoryCollection.find(query).toArray();
       res.send(result);
     });
   } finally {
