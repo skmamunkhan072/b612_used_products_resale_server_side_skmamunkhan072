@@ -133,8 +133,10 @@ async function run() {
       );
       const query = { Category: category?.categoryName };
       const result = await allProductsCategoryCollection.find(query).toArray();
-      res.send(result);
+      const resultData = result.filter((data) => data?.product !== "paid");
+      res.send(resultData);
     });
+    // 41bb
     // products add database
     app.post("/add-product", verifyJWT, async (req, res) => {
       const product = req.body;
@@ -201,10 +203,12 @@ async function run() {
         const resultDAta = await allProductsCategoryCollection
           .find(dataquery)
           .toArray();
-
         products.push(resultDAta[0]);
       }
-      res.send(products);
+      const finelResult = products.filter(
+        (product) => product?.product !== "paid"
+      );
+      res.send(finelResult);
     });
 
     // AdvertisedItems function
@@ -249,8 +253,7 @@ async function run() {
         updateDoc,
         options
       );
-
-      req.send(result);
+      res.send(result);
     });
     //payment function
     app.post("/dashboard/payment", async (req, res) => {
@@ -265,6 +268,18 @@ async function run() {
       res.send({
         clientSecret: paymentIntent.client_secret,
       });
+    });
+
+    // my orders
+    app.get("/my-orders", verifyJWT, async (req, res) => {
+      const email = req.decoded.email;
+      const query = { email };
+      const resultData = await bookingProductsCollection.find(query).toArray();
+      const result = resultData.filter(
+        (product) => product?.product === "paid"
+      );
+      console.log("my orders", result);
+      res.send(result);
     });
   } finally {
   }
