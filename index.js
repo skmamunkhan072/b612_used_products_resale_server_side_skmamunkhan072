@@ -67,19 +67,23 @@ async function run() {
     // all user get function
     app.get("/users", verifyJWT, async (req, res) => {
       const email = req.decoded.email;
-      const loginUserEmail = req.query.email;
-      console.log(loginUserEmail, "hit korecea");
-      if (loginUserEmail) {
-        const loginUserQuery = { email: loginUserEmail };
-        const result = await usersCollection.findOne(loginUserQuery);
-        console.log(result);
-        return res.send(result);
-      }
       const query = {};
+      const admin = await usersCollection.findOne({ email });
       const result = await usersCollection.find(query).toArray();
       const data = result?.filter((user) => user.email !== email);
-      res.send(data);
+      if (admin?.selectedRole === "admin") {
+        return res.send(data);
+      }
+      res.status(403).send({ message: "forbidden access" });
     });
+    // one user
+    app.get("/user", async (req, res) => {
+      const loginUserEmail = req.query.email;
+      const loginUserQuery = { email: loginUserEmail };
+      const result = await usersCollection.findOne(loginUserQuery);
+      res.send(result);
+    });
+
     // user delete function
     app.delete("/user/:id", async (req, res) => {
       const userId = req.params.id;
@@ -168,7 +172,6 @@ async function run() {
       const updateDoc = {
         $set: {
           advertised: true,
-          sellersVerify: true,
         },
       };
       const result = await allProductsCategoryCollection.updateOne(
@@ -181,7 +184,6 @@ async function run() {
     //book products
     app.get("/book-now/:id", async (req, res) => {
       const id = req.params.id;
-      console.log(id, "paice");
       const query = { _id: ObjectId(id) };
       const result = await allProductsCategoryCollection.findOne(query);
       res.send(result);
