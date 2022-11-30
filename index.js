@@ -82,7 +82,7 @@ async function run() {
       res.send(result);
     });
     // user verify
-    app.put("/user/:id", async (req, res) => {
+    app.put("/user/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const options = { upsert: true };
@@ -91,7 +91,22 @@ async function run() {
           sellersVerify: true,
         },
       };
-      const result = await usersCollection.updateOne(query, updateDoc, options);
+      const userverify = await usersCollection.updateOne(
+        query,
+        updateDoc,
+        options
+      );
+      const user = await usersCollection.findOne(query);
+      const emailQuery = user?.email;
+      const result = await allProductsCategoryCollection.updateMany(
+        { email: emailQuery },
+        updateDoc,
+        options
+      );
+
+      // for (const product of result) {
+      // }
+      console.log(result);
       res.send(result);
     });
 
@@ -101,6 +116,7 @@ async function run() {
       const result = await usersCollection.deleteOne({ _id: ObjectId(userId) });
       res.send(result);
     });
+
     // Jwt token crate function
     app.get("/jwt", async (req, res) => {
       const email = req.query.email;
@@ -173,20 +189,36 @@ async function run() {
       );
       res.send(result);
     });
+
+    // my product delete
+    app.delete("/my-products/:id", verifyJWT, async (req, res) => {
+      const itemsId = req.params.id;
+      const query = { _id: ObjectId(itemsId) };
+      const result = await allProductsCategoryCollection.deleteOne(query);
+      res.send(result);
+    });
     //book products
-    app.get("/book-now/:id", async (req, res) => {
+    app.get("/book-now/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await allProductsCategoryCollection.findOne(query);
       res.send(result);
     });
+    // Delete booking product items
+    app.delete("/book-now/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await bookingProductsCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // booking product function
-    app.post("/book-now", async (req, res) => {
+    app.post("/book-now", verifyJWT, async (req, res) => {
       const booking = req.body;
       const result = await bookingProductsCollection.insertOne(booking);
       res.send(result);
     });
+
     // booking products
     app.get("/my-booking-products", verifyJWT, async (req, res) => {
       const email = req.decoded.email;
@@ -196,23 +228,15 @@ async function run() {
       }
       const query = { email };
       const result = await bookingProductsCollection.find(query).toArray();
-      const products = [];
-      for (const product of result) {
-        const productId = product?.bookingProductId;
-        const dataquery = { _id: ObjectId(productId) };
-        const resultDAta = await allProductsCategoryCollection
-          .find(dataquery)
-          .toArray();
-        products.push(resultDAta[0]);
-      }
-      const finelResult = products.filter(
-        (product) => product?.product !== "paid"
+
+      const finelResult = result.filter(
+        (product) => product?.payment !== "paid"
       );
       res.send(finelResult);
     });
 
     // AdvertisedItems function
-    app.get("/advertised-items", async (req, res) => {
+    app.get("/advertised-items", verifyJWT, async (req, res) => {
       const email = req.query.email;
       const query = { email, advertised: true };
       const result = await allProductsCategoryCollection.find(query).toArray();
@@ -220,13 +244,13 @@ async function run() {
     });
 
     //payment function products
-    app.get("/dashboard/payment/:id", async (req, res) => {
+    app.get("/dashboard/payment/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await allProductsCategoryCollection.findOne(query);
       res.send(result);
     });
-    app.put("/dashboard/payments", async (req, res) => {
+    app.put("/dashboard/payments", verifyJWT, async (req, res) => {
       const bookingData = req?.body;
       const bookingId = bookingData?.bookingId;
       const query = { _id: ObjectId(bookingId) };
@@ -235,12 +259,12 @@ async function run() {
       const bookingDoc = {
         $set: {
           transactionId: bookingData?.transactionId,
-          product: "paid",
+          payment: "paid",
         },
       };
       const updateDoc = {
         $set: {
-          product: "paid",
+          payment: "paid",
         },
       };
       const booking = await bookingProductsCollection.updateOne(
@@ -256,7 +280,7 @@ async function run() {
       res.send(result);
     });
     //payment function
-    app.post("/dashboard/payment", async (req, res) => {
+    app.post("/dashboard/payment", verifyJWT, async (req, res) => {
       const booking = req.body;
       const price = booking.resalePrice;
       const amount = price * 100;
@@ -276,10 +300,48 @@ async function run() {
       const query = { email };
       const resultData = await bookingProductsCollection.find(query).toArray();
       const result = resultData.filter(
-        (product) => product?.product === "paid"
+        (product) => product?.payment === "paid"
       );
-      console.log("my orders", result);
       res.send(result);
+    });
+
+    // repot items function
+    app.put("/repot-item", verifyJWT, async (req, res) => {
+      const id = req?.body;
+      const query = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const repotItem = {
+        $set: {
+          productRepot: true,
+        },
+      };
+      // allProductsCategoryCollection
+      const result = await allProductsCategoryCollection.updateOne(
+        query,
+        repotItem,
+        options
+      );
+      res.send(result);
+    });
+
+    // Repot items alll
+    app.get("/repot-items", async (req, res) => {
+      const allRepotItems = await allProductsCategoryCollection
+        .find({ productRepot: true })
+        .toArray();
+
+      console.log(allRepotItems);
+      res.send(allRepotItems);
+    });
+    // repoted item deleted
+    app.delete("/repot-items/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      // const allRepotItems = await allProductsCategoryCollection.deleteOne({
+      //   _id: ObjectId(id),
+      // });
+
+      console.log(id);
+      // res.send(allRepotItems);
     });
   } finally {
   }
