@@ -103,10 +103,6 @@ async function run() {
         updateDoc,
         options
       );
-
-      // for (const product of result) {
-      // }
-      console.log(result);
       res.send(result);
     });
 
@@ -149,7 +145,7 @@ async function run() {
       );
       const query = { Category: category?.categoryName };
       const result = await allProductsCategoryCollection.find(query).toArray();
-      const resultData = result.filter((data) => data?.product !== "paid");
+      const resultData = result.filter((data) => data?.payment !== "paid");
       res.send(resultData);
     });
     // 41bb
@@ -352,6 +348,21 @@ async function run() {
     });
 
     // My All Buyers
+    app.get("/my-all-buyers", verifyJWT, async (req, res) => {
+      const sealerEmail = req?.decoded?.email;
+      const result = await bookingProductsCollection
+        .find({ sealerEmail: sealerEmail, payment: "paid" })
+        .toArray();
+      let allBuyers = [];
+      for (const allBuyersEmail of result) {
+        console.log(allBuyersEmail.email);
+        const buyersEmail = await usersCollection.findOne({
+          email: allBuyersEmail?.email,
+        });
+        allBuyers.push(buyersEmail);
+      }
+      res.send(allBuyers);
+    });
   } finally {
   }
 }
