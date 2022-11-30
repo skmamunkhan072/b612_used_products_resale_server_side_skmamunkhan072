@@ -195,6 +195,10 @@ async function run() {
       const itemsId = req.params.id;
       const query = { _id: ObjectId(itemsId) };
       const result = await allProductsCategoryCollection.deleteOne(query);
+      const booingProductDelet = await bookingProductsCollection.deleteMany({
+        bookingProductId: itemsId,
+      });
+      console.log(booingProductDelet, result);
       res.send(result);
     });
     //book products
@@ -250,8 +254,10 @@ async function run() {
       const result = await allProductsCategoryCollection.findOne(query);
       res.send(result);
     });
+    // 6386ee4f5048a5da521892a1
     app.put("/dashboard/payments", verifyJWT, async (req, res) => {
       const bookingData = req?.body;
+      console.log(bookingData);
       const bookingId = bookingData?.bookingId;
       const query = { _id: ObjectId(bookingId) };
       const bookingQuery = { bookingProductId: bookingId };
@@ -265,6 +271,7 @@ async function run() {
       const updateDoc = {
         $set: {
           payment: "paid",
+          bookingId: bookingId,
         },
       };
       const booking = await bookingProductsCollection.updateOne(
@@ -325,24 +332,26 @@ async function run() {
     });
 
     // Repot items alll
-    app.get("/repot-items", async (req, res) => {
+    app.get("/repot-items", verifyJWT, async (req, res) => {
       const allRepotItems = await allProductsCategoryCollection
         .find({ productRepot: true })
         .toArray();
 
-      console.log(allRepotItems);
       res.send(allRepotItems);
     });
     // repoted item deleted
     app.delete("/repot-items/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
-      // const allRepotItems = await allProductsCategoryCollection.deleteOne({
-      //   _id: ObjectId(id),
-      // });
-
-      console.log(id);
-      // res.send(allRepotItems);
+      const allRepotItems = await allProductsCategoryCollection.deleteOne({
+        _id: ObjectId(id),
+      });
+      const result = await bookingProductsCollection.deleteMany({
+        bookingProductId: id,
+      });
+      res.send(allRepotItems);
     });
+
+    // My All Buyers
   } finally {
   }
 }
