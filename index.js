@@ -194,7 +194,6 @@ async function run() {
       const booingProductDelet = await bookingProductsCollection.deleteMany({
         bookingProductId: itemsId,
       });
-      console.log(booingProductDelet, result);
       res.send(result);
     });
     //book products
@@ -253,7 +252,6 @@ async function run() {
     // 6386ee4f5048a5da521892a1
     app.put("/dashboard/payments", verifyJWT, async (req, res) => {
       const bookingData = req?.body;
-      console.log(bookingData);
       const bookingId = bookingData?.bookingId;
       const query = { _id: ObjectId(bookingId) };
       const bookingQuery = { bookingProductId: bookingId };
